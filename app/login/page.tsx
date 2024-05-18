@@ -28,7 +28,7 @@ export default function LogIn() {
                     errors={[]}
                     name="password"
                 />
-                <FormButton loading={false} text="Log in" />
+                <FormButton text="Log in" />
             </form>
 
             <SocialLogin />

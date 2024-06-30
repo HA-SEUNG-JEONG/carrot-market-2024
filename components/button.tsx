@@ -5,7 +5,7 @@ interface FormButtonProps {
     text: string;
 }
 
-export default function FormButton({ text }: FormButtonProps) {
+export default function Button({ text }: FormButtonProps) {
     // useFormStatus 훅은 action을 실행하는 form과 같은 곳에서 사용할 수 없다.
     // form의 자식 요소에서만 사용 가능하다.
     const { pending } = useFormStatus();

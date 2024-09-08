@@ -8,7 +8,7 @@ const test = async () => {
             token: "1212112",
             user: {
                 connect: {
-                    id: 1
+                    id: 3
                 }
             }
         }

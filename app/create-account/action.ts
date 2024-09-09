@@ -19,32 +19,6 @@ const checkPassword = ({
     confirmPassword: string;
 }) => password === confirmPassword;
 
-const checkUniqueUsername = async (username: string) => {
-    // email 및 username이 이미 존재하는 지 확인
-    const user = await db.user.findUnique({
-        where: {
-            username
-        },
-        select: {
-            id: true
-        }
-    });
-    return !Boolean(user);
-};
-
-const checkUniqueUserEmail = async (email: string) => {
-    // email 및 username이 이미 존재하는 지 확인
-    const userEmail = await db.user.findUnique({
-        where: {
-            email
-        },
-        select: {
-            id: true
-        }
-    });
-    return Boolean(userEmail) === false;
-};
-
 const formSchema = z
     .object({
         username: z
@@ -55,21 +29,57 @@ const formSchema = z
 
             .toLowerCase()
             .trim()
-            .refine(checkUsername, "custom error")
-            .refine(checkUniqueUsername, "Username은 유니크해야합니다."),
-        email: z
-            .string()
-            .email()
-            .toLowerCase()
-            .refine(checkUniqueUserEmail, "email은 유니크해야합니다."),
-        password: z
-            .string()
-            .min(PASSWORD_MIN_LENGTH)
-            .regex(
-                PASSWORD_REGEX,
-                "비밀번호는 소문자, 대문자, 숫자, 특수문자를 포함해야 합니다."
-            ),
+            .refine(checkUsername, "custom error"),
+
+        email: z.string().email().toLowerCase(),
+
+        password: z.string().min(PASSWORD_MIN_LENGTH),
+        // .regex(
+        //     PASSWORD_REGEX,
+        //     "비밀번호는 소문자, 대문자, 숫자, 특수문자를 포함해야 합니다."
+        // )
         confirmPassword: z.string().min(PASSWORD_MIN_LENGTH)
+    })
+
+    .superRefine(async ({ username }, ctx) => {
+        const user = await db.user.findUnique({
+            where: {
+                username
+            },
+            select: {
+                id: true
+            }
+        });
+        if (user) {
+            ctx.addIssue({
+                code: "custom",
+                message: "This username is already taken",
+                path: ["username"],
+                fatal: true
+            });
+            z.NEVER;
+        }
+        // fatal:true, z.NEVER로 설정하면 이후에 다른 refine이 나와도 실행 X
+    })
+    .superRefine(async ({ email }, ctx) => {
+        const user = await db.user.findUnique({
+            where: {
+                email
+            },
+            select: {
+                id: true
+            }
+        });
+        if (user) {
+            ctx.addIssue({
+                code: "custom",
+                message: "This email is already taken",
+                path: ["email"],
+                fatal: true
+            });
+            z.NEVER;
+        }
+        // fatal:true, z.NEVER로 설정하면 이후에 다 른 refine이 나와도 실행 X
     })
     .refine(checkPassword, {
         message: "Both password should be equal",

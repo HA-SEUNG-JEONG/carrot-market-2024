@@ -7,6 +7,7 @@ import bcrypt from "bcrypt";
 import { cookies } from "next/headers";
 import { getIronSession } from "iron-session";
 import { redirect } from "next/navigation";
+import getSession from "@/lib/session";
 
 const checkUsername = (username: string) => !username.includes("potato");
 
@@ -101,11 +102,7 @@ export const createAccount = async (prevState: any, formData: FormData) => {
         });
 
         // 로그인 처리
-        const session = await getIronSession(cookies(), {
-            cookieName: "delicious-karrot",
-            password: process.env.BCRYPT_PASSWORD!
-        });
-        //@ts-ignore
+        const session = await getSession();
         session.id = user.id;
         await session.save();
         redirect("/profile");

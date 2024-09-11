@@ -61,6 +61,7 @@ export const Login = async (prev: unknown, formData: FormData) => {
         if (okPassword) {
             const session = await getSession();
             session.id = user!.id;
+            session.save();
             redirect("/profile");
         } else {
             return {

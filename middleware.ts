@@ -1,9 +1,17 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-const middleware = (req: NextRequest) => {
+export async function middleware(req: NextRequest) {
+    const pathname = req.nextUrl.pathname;
+    if (pathname === "/") {
+        const response = NextResponse.next();
+        response.cookies.set("middleware-cookie", "hello");
+        return response;
+    }
     if (req.nextUrl.pathname === "/profile") {
         return Response.redirect(new URL("/", req.url));
     }
-};
+}
 
-export default middleware;
+export const config = {
+    matcher: ["/", "/profile", "/create-account", "/user/:path*"]
+};

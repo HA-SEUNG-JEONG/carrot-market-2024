@@ -1,14 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
+import getSession from "./lib/session";
+
+interface Routes {
+    [key: string]: boolean;
+}
+
+const publicOnlyrls: Routes = {
+    "/": true,
+    "/login": true,
+    "/sms": true,
+    "/create-account": true
+};
 
 export async function middleware(req: NextRequest) {
-    const pathname = req.nextUrl.pathname;
-    if (pathname === "/") {
-        const response = NextResponse.next();
-        response.cookies.set("middleware-cookie", "hello");
-        return response;
-    }
-    if (req.nextUrl.pathname === "/profile") {
-        return Response.redirect(new URL("/", req.url));
+    const session = await getSession();
+    const exists = publicOnlyrls[req.nextUrl.pathname];
+    if (!session.id) {
+        if (!exists) {
+            return NextResponse.redirect(new URL("/", req.url));
+        }
+    } else {
+        // 로그인한 상태
+        if (exists) {
+            return NextResponse.redirect(new URL("/products", req.url));
+        }
     }
 }
 

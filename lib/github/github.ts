@@ -5,13 +5,22 @@ interface Email {
     visibility: "private" | "public" | null;
 }
 
-export async function getUserProfile(token: string) {
-    const userProfileResponse = await fetch("https://api.github.com/user", {
+const GITHUB__USER_URL = "https://api.github.com/user";
+
+const userResponse = (url: string, token: string) => {
+    return fetch(url, {
         headers: {
             Authorization: `Bearer ${token}`
         },
         cache: "no-cache"
     });
+};
+
+export async function getUserProfile(token: string) {
+    const userProfileResponse = await userResponse(
+        `${GITHUB__USER_URL}`,
+        token
+    );
 
     if (!userProfileResponse.ok) {
         throw new Error("Failed to fetch user profile");
@@ -20,20 +29,14 @@ export async function getUserProfile(token: string) {
 }
 
 export async function getUserEmail(token: string) {
-    const userEmailResponse = await fetch(
-        "https://api.github.com/user/emails",
-        {
-            headers: {
-                Authorization: `Bearer ${token}`
-            },
-            cache: "no-cache"
-        }
+    const userEmailResponse = await userResponse(
+        `${GITHUB__USER_URL}/emails`,
+        token
     );
     if (!userEmailResponse.ok) {
         throw new Error("Failed to fetch user emails");
     }
     const emails: Email[] = await userEmailResponse.json();
-    // Filter for the first email with visibility 'public'
     const publicEmail = emails.filter(
         (email) => email.visibility === "public"
     )[0];

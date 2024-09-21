@@ -1,4 +1,4 @@
-import { handleGitHubOAuth } from "@/lib/auth/githubOAuth";
+import { handleGitHubOAuth } from "@/lib/github/auth/githubOAuth";
 import { NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {

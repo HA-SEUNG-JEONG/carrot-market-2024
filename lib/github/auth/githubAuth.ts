@@ -16,9 +16,5 @@ export async function getGitHubAccessToken(code: string) {
     });
 
     const { error, access_token } = await accessTokenResponse.json();
-    if (error) {
-        return null;
-    }
-
-    return access_token;
+    return error ? null : access_token;
 }

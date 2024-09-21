@@ -1,8 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 import { getGitHubAccessToken } from "./githubAuth";
-import { getUserEmail, getUserProfile } from "../github/github";
-import { createOrUpdateUser } from "../user/userService";
-import userLogin from "../userLogin";
+import { getUserEmail, getUserProfile } from "../github";
+import { createOrUpdateUser } from "../../user/userService";
+import userLogin from "../../userLogin";
 
 export async function handleGitHubOAuth(code: string | null) {
     if (!code) {

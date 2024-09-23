@@ -7,6 +7,8 @@ import validator from "validator";
 // refine 메소드에는 함수가 들어가는데 조건문이어야 함
 
 import { z } from "zod";
+import getSession from "@/lib/session";
+import userLogin from "@/lib/userLogin";
 
 const phoneSchema = z
     .string()
@@ -16,7 +18,23 @@ const phoneSchema = z
         "Wrong Phone Number"
     );
 
-const tokenSchema = z.coerce.number().min(100000).max(999999);
+const tokenExists = async (token: number) => {
+    const exists = await db.sMSToken.findUnique({
+        where: {
+            token: token.toString()
+        },
+        select: {
+            id: true
+        }
+    });
+    return Boolean(exists);
+};
+
+const tokenSchema = z.coerce
+    .number()
+    .min(100000)
+    .max(999999)
+    .refine(tokenExists, "이 토큰은 존재하지 않습니다.");
 
 interface ActionState {
     token: boolean;
@@ -82,14 +100,40 @@ export const smsLogin = async (prevState: ActionState, formData: FormData) => {
             };
         }
     } else {
-        const result = tokenSchema.safeParse(token);
+        const result = await tokenSchema.safeParseAsync(token);
         if (!result.success) {
             return {
                 token: true,
                 error: result.error.flatten()
             };
         } else {
-            redirect("/");
+            const token = await db.sMSToken.findUnique({
+                where: {
+                    token: result.data.toString()
+                },
+                select: {
+                    userId: true,
+                    id: true
+                }
+            });
+            if (token) {
+                // userLogin(token);
+                const session = await getSession();
+                session.id = token.userId;
+                await session.save();
+
+                await db.sMSToken.delete({
+                    where: {
+                        id: token.id
+                    }
+                });
+                // return { token: true, error: undefined };
+                redirect("/profile");
+            }
+            return {
+                token: true,
+                error: undefined
+            };
         }
     }
 };

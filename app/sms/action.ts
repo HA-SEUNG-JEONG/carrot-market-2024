@@ -1,4 +1,6 @@
 "use server";
+import crypto from "crypto";
+import db from "@/lib/db";
 import { redirect } from "next/navigation";
 import validator from "validator";
 
@@ -20,6 +22,22 @@ interface ActionState {
     token: boolean;
 }
 
+const createToken = async () => {
+    const token = crypto.randomInt(100000, 999999).toString();
+    const existsToken = await db.sMSToken.findUnique({
+        where: {
+            token
+        },
+        select: {
+            id: true
+        }
+    });
+    if (existsToken) {
+        return createToken();
+    }
+    return token;
+};
+
 export const smsLogin = async (prevState: ActionState, formData: FormData) => {
     const phone = formData.get("phone");
     const token = formData.get("token");
@@ -32,6 +50,33 @@ export const smsLogin = async (prevState: ActionState, formData: FormData) => {
                 error: result.error.flatten()
             };
         } else {
+            // 이전 토큰 삭제
+            await db.sMSToken.deleteMany({
+                where: {
+                    user: {
+                        phone: result.data
+                    }
+                }
+            });
+            // 새 토큰 생성
+            const token = await createToken();
+            await db.sMSToken.create({
+                data: {
+                    token,
+                    user: {
+                        connectOrCreate: {
+                            where: {
+                                phone: result.data
+                            },
+                            create: {
+                                phone: result.data,
+                                username: crypto.randomBytes(10).toString("hex")
+                            }
+                        }
+                    }
+                }
+            });
+            // twilio에 토큰 저장
             return {
                 token: true
             };
